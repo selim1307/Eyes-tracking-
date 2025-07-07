@@ -52,3 +52,49 @@ if "timestamp" in df.columns:
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+# === Charger les données ===
+df = pd.read_csv("features_log.csv")
+
+# === Nettoyer les colonnes ===
+features = df.drop(columns=[col for col in ["timestamp", "gaze", "anomaly"] if col in df.columns])
+
+# === Étiquettes (s’il y a 'anomaly' dans le CSV) ===
+labels = df["anomaly"] if "anomaly" in df.columns else None
+
+# === Standardiser les données ===
+scaler = StandardScaler()
+features_scaled = scaler.fit_transform(features)
+
+# === Appliquer PCA (2 composants pour visualisation) ===
+pca = PCA(n_components=2)
+pca_result = pca.fit_transform(features_scaled)
+
+# === Création d’un DataFrame PCA ===
+pca_df = pd.DataFrame(pca_result, columns=["PC1", "PC2"])
+if labels is not None:
+    pca_df["anomaly"] = labels
+
+# === Visualisation ===
+plt.figure(figsize=(10, 6))
+if labels is not None:
+    plt.scatter(pca_df[pca_df["anomaly"] == 1]["PC1"],
+                pca_df[pca_df["anomaly"] == 1]["PC2"],
+                label="✅ Normal", alpha=0.6)
+    plt.scatter(pca_df[pca_df["anomaly"] == -1]["PC1"],
+                pca_df[pca_df["anomaly"] == -1]["PC2"],
+                label="🚨 Anomalie", alpha=0.6, color="red")
+else:
+    plt.scatter(pca_df["PC1"], pca_df["PC2"], label="Données")
+
+plt.xlabel("PC1")
+plt.ylabel("PC2")
+plt.title("Projection PCA des features de mouvement oculaire")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
